@@ -24,7 +24,7 @@ def chat_client():
     sys.stdout.write('[Me] '); sys.stdout.flush()
 
     while 1:
-        socket_list = [socket.socket(), s]
+        socket_list = [sys.stdin, s]
 
         # Get the list sockets which are readable
         read_sockets, write_sockets, error_sockets = select.select(socket_list , socket_list, socket_list)
@@ -39,11 +39,14 @@ def chat_client():
                 else :
                     #print data
                     sys.stdout.write(data)
-                    sys.stdout.write('[Me] '); sys.stdout.flush()
-
+                    sys.stdout.write('[Me] ')
+                    sys.stdout.flush()
             else :
                 # user entered a message
                 msg = sys.stdin.readline()
+                if msg.strip() == '!quit':
+                    sys.stdout.write('Exiting!\n')
+                    sys.exit(1)
                 s.send(msg)
                 sys.stdout.write('[Me] '); sys.stdout.flush()
 
