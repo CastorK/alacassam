@@ -5,6 +5,15 @@ def check_keywords(data):
         sys.stdout.write('Exiting!\n')
         sys.stdout.flush()
         sys.exit()
+        return True
+    elif data == '!help':
+        helpmsg = 'Type "!quit" to exit the program\n'
+        sys.stdout.write(helpmsg)
+        sys.stdout.flush()
+        return True
+
+    else:
+        return False
 
 def ala_client():
 
@@ -42,6 +51,7 @@ def ala_client():
         print 'Failed to connect'
         sys.exit()
 
+    sys.stdout.write("type !help for instructions\n")
     sys.stdout.write('[%s] ' % USERNAME)
     sys.stdout.flush()
 
@@ -66,8 +76,11 @@ def ala_client():
             else:
                 # It was from us the message came
                 data = sys.stdin.readline()
-                check_keywords(data.strip())
-                s.send(data)
+                if check_keywords(data.strip()):
+                    pass
+                else :
+                    # if there wasnt a keyword just send the data
+                    s.send(data)
                 sys.stdout.write('[%s] ' % USERNAME)
                 sys.stdout.flush()
 
