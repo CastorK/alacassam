@@ -41,6 +41,7 @@ def chat_server():
                         # Accept the new connection, save the client socket and address
                         client, address = server.accept()
                         connections.append(client)
+                        print ('Client IP: %s, PORT: %s joined' % address)
                         send_to_all('Client IP: %s, PORT: %s joined\n' % address, server, client, connections)
                     # Message from client
                     else:
@@ -59,10 +60,12 @@ def chat_server():
 
                             message = 'Client IP: %s, PORT: %s has disconnected\n' % address
                             send_to_all(message, server, current_socket)
+                            print (message)
 
                 except:
                     message = 'Client IP: %s, PORT: %s has disconnected\n' % address
                     send_to_all(message, server, current_socket, connections)
+                    print (message)
                     continue
 
         server.close()
