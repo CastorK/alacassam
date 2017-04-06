@@ -60,7 +60,7 @@ class Chat_server:
                                     connections.remove(current_socket)
 
                                 message = 'Client IP: %s, PORT: %s has disconnected' % address
-                                self.send_to_all(message + '\n', server, current_socket)
+                                self.send_to_all(message + '\n', server, current_socket, connections)
                                 print (message)
 
                     except socket.error, msg:
@@ -89,6 +89,11 @@ class Chat_server:
                 if socket in connections:
                     connections.remove(socket)
 
+
+class Channel:
+    def __init__(self, name):
+        self.name = name
+        self.clients = set()
 
 if __name__ == "__main__":
     try:
