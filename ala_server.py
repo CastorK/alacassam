@@ -3,7 +3,7 @@ import sys # for exit
 
 class Chat_server:
     def __init__(self):
-        port = 9001
+        port = 6667
         connections = []
         try:
             # IPv4 TCP socket
@@ -11,9 +11,9 @@ class Chat_server:
             # Socket can reuse address, this is to prevent the "Address already in use" error message
             server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             # Bind socket to port
-            # server.bind((socket.gethostname(), port))
             print(socket.gethostbyname(socket.gethostname()))
-            server.bind((socket.gethostbyname(socket.gethostname()), port))
+            #server.bind((socket.gethostbyname(socket.gethostname()), port))
+            server.bind(('', port))
             # Listen for connections, max 5 connections in queue
             server.listen(5)
             # Add server to list of readable sockets
@@ -84,6 +84,10 @@ class Chat_server:
                 if socket in connections:
                     connections.remove(socket)
 
+    def quit(self):
+        for sock in connections:
+            sock.close()
+        sys.exit()
 
 class Channel:
     def __init__(self, name):
@@ -92,6 +96,6 @@ class Channel:
 
 if __name__ == "__main__":
     try:
-        Chat_server()
+        server = Chat_server()
     except socket.error, e:
         sys.exit()
