@@ -41,8 +41,9 @@ def chat_server():
                         # Accept the new connection, save the client socket and address
                         client, address = server.accept()
                         connections.append(client)
-                        print ('Client IP: %s, PORT: %s joined' % address)
-                        send_to_all('Client IP: %s, PORT: %s joined\n' % address, server, client, connections)
+                        message = 'Client IP: %s, PORT: %s joined' % address
+                        send_to_all(message + '\n', server, client, connections)
+                        print (message)
                     # Message from client
                     else:
                         # TODO: Check if the whole message has been received
@@ -59,12 +60,12 @@ def chat_server():
                                 connections.remove(current_socket)
 
                             message = 'Client IP: %s, PORT: %s has disconnected' % address
-                            send_to_all(message, server, current_socket)
+                            send_to_all(message + '\n', server, current_socket)
                             print (message)
 
                 except:
                     message = 'Client IP: %s, PORT: %s has disconnected' % address
-                    send_to_all(message, server, current_socket, connections)
+                    send_to_all(message + '\n', server, current_socket, connections)
                     print (message)
                     continue
 
@@ -84,7 +85,6 @@ def send_to_all(message, server, sender_socket, connections):
         except :
             # Socket is broken
             socket.close()
-            # Remove broken socket
             if socket in connections:
                 connections.remove(socket)
 
