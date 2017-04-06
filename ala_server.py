@@ -8,22 +8,17 @@ class Chat_server:
         try:
             # IPv4 TCP socket
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
             # Socket can reuse address, this is to prevent the "Address already in use" error message
             server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
             # Bind socket to port
             # server.bind((socket.gethostname(), port))
-            server.bind(('', port))
-
+            print(socket.gethostbyname(socket.gethostname()))
+            server.bind((socket.gethostbyname(socket.gethostname()), port))
             # Listen for connections, max 5 connections in queue
             server.listen(5)
-
             # Add server to list of readable sockets
             connections.append(server)
-
             print ('Alacassam chat server started on port %s' % port)
-
             # Do stuff with connections
             while True:
                 # Blocks until at least one file descriptor is ready.
