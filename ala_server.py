@@ -58,12 +58,12 @@ def chat_server():
                             if current_socket in connections:
                                 connections.remove(current_socket)
 
-                            message = 'Client IP: %s, PORT: %s has disconnected\n' % address
+                            message = 'Client IP: %s, PORT: %s has disconnected' % address
                             send_to_all(message, server, current_socket)
                             print (message)
 
                 except:
-                    message = 'Client IP: %s, PORT: %s has disconnected\n' % address
+                    message = 'Client IP: %s, PORT: %s has disconnected' % address
                     send_to_all(message, server, current_socket, connections)
                     print (message)
                     continue
