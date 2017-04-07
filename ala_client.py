@@ -94,7 +94,7 @@ def ala_client():
                     print 'Lost connection to server'
                     sys.exit()
                 else:
-                    if text.find("PING") != -1:
+                    if text.find("PING") != -1 and len(text.split()) > 1:
                         s.send("PONG " + text.split()[1] + '\r\n')
                     else:
                         # Print out what we received
@@ -102,9 +102,7 @@ def ala_client():
             else:
                 # It was from us the message came
                 data = sys.stdin.readline()
-                if check_keywords(s, data.strip()):
-                    pass
-                else :
+                if not check_keywords(s, data.strip()):
                     s.send(data)
                     sys.stdout.flush()
 
