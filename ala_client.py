@@ -49,7 +49,10 @@ def ala_client():
             msg = color.PURPLE + color.BOLD + NICK + " " + " ".join(data.split()[1:]) + color.END
             s.send(msg)
             return True
-
+        elif data.find("/join") == 0 and len(data.split()) > 1:
+            msg = "JOIN %s\r\n" % data.split()[1].strip()
+            s.send(msg)
+            return True
         else:
             return False
 

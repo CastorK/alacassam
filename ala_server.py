@@ -183,11 +183,17 @@ class Chat_server:
                     client.channel = channel
                     channel.clients.append(client)
                     self.send_server('Joined channel ' + channel.name + '!', [client.socket])
-                    return True
-            else:
-                message = "Channel doesn't exist"
-                self.send_error(message, [client.socket])
-                return False
+                return True
+        message = "Channel doesn't exist"
+        self.send_error(message, [client.socket])
+        return False
+
+    def create_channel(self, name):
+        if name not in map(lambda ch: ch.name, self.channels):
+            self.channels.append(Channel('#' + name))
+            print 'Channel %s created!' % name
+        else:
+            print 'Channel %s already exists!' % name
 
     # Sends to message to the specified channel. The socket specified in 'sender' will not get the message
     def send_to_channel(self, message, channel, sender = None):
@@ -221,6 +227,9 @@ class Chat_server:
                       '╠═╣║  ╠═╣║  ╠═╣╚═╗╚═╗╠═╣║║║\n'+
                       '╩ ╩╩═╝╩ ╩╚═╝╩ ╩╚═╝╚═╝╩ ╩╩ ╩\n')
             self.broadcast(message, self.server)
+        elif key == 'newchannel':
+            if argument:
+                self.create_channel(argument)
 
     def quit(self):
         for sock in self.connections:
