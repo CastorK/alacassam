@@ -105,15 +105,17 @@ class Chat_server:
         if message.find('PONG') == 0 and sender in self.pendingConnections:
             self.pendingConnections.remove(sender)  # Remove socket from unauthorized connections
             self.connections.append(sender)         # Add it to authorized connections
-            client = Client(sender)
+            client = Client(socket=sender)
             self.clients.append(client)
-            message = 'Client IP: %s, PORT: %s joined' % sender.getsockname()
+            message = 'Client IP: %s, PORT: %s joined' % (sender.getsockname()[0], sender.getsockname()[1])
             self.broadcast(message + '\r\n', sender)
             print message
             return True
         elif message.find('NICK ') == 0:
+            print "# DEBUG # NICK command received"
             for client in self.clients:
-                if sender == client.socket:
+                print '# DEBUG # USERNAME: ' + client.username
+                if sender is client.socket:
                     client.username = message.split()[1]
                     print('He is called ' + client.username)
         else:
