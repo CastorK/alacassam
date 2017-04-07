@@ -42,13 +42,10 @@ class Chat_server:
                             self.ping(client)
 
                         elif current_socket == sys.stdin:
-                            print "WOO"
                             received = sys.stdin.readline()
-                            #handle_server_command(received)
-                            self.broadcast('server:' + received, server, current_socket, connections)
+                            self.handle_server_command(received)
                         # Message from client
                         else:
-                            print current_socket
                             # TODO: Check if the whole message has been received
                             received = current_socket.recv(4096)
 
@@ -120,6 +117,12 @@ class Chat_server:
                     print('He is called ' + client.username)
         else:
             return False
+
+    def handle_server_command(self, command):
+        command = command.strip()
+        if command == 'quit':
+            self.quit()
+
 
     def quit(self):
         for sock in self.connections:
