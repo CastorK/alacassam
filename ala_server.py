@@ -21,7 +21,7 @@ class Chat_server:
         self.connections = []
         self.connected_clients = []
         self.pendingConnections = []
-        self.channels = [Channel('#default')]
+        self.channels = [Channel('#default'), Channel('#default2')]
         try:
             # IPv4 TCP socket
             self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -136,9 +136,7 @@ class Chat_server:
             for client in self.connected_clients:
                 if client.socket == sender:
                     username = client.username
-            message = 'broadcast:%s joined the channel!' % username
             self.handle_server_command(message + '\r\n')
-            print message
 
         elif message.find('NICK ') == 0:
             for client in self.connected_clients:
@@ -150,8 +148,13 @@ class Chat_server:
             for client in self.connected_clients:
                 if sender is client.socket:
                     if self.change_channel(client, '#' + message.split()[1]):
-                        map(lambda client: client.socket, client.channel.clients)
+                        sockets = map(lambda client: client.socket, client.channel.clients)
+                        message = client.username + ' has joined the channel!'
+                        self.send_to_channel(message, client.channel)
                         print 'Client IP: %s, PORT: %s joined %s' % (sender.getpeername()[0], sender.getpeername()[1], client.channel.name)
+                    else:
+                        self.send_server('\nredirecting to default channel...', [client.socket])
+                        self.change_channel(client, '#default')
 
         elif message.find('PRIVMSG ') == 0:
             name = ''
@@ -178,19 +181,27 @@ class Chat_server:
                 if not client in channel.clients:
                     client.channel = channel
                     channel.clients.append(client)
+                    self.send_server('Joined channel ' + channel.name + '!', [client.socket])
                     return True
             else:
                 message = "Channel doesn't exist"
-                self.send_error(message, client.socket)
+                self.send_error(message, [client.socket])
                 return False
 
-    def send_server(self, message, socket):
-        message = style.GREEN + style.BOLD + '[SERVER] ' + style.END + message.strip()
-        send(message, [socket])
+    # Sends to message to the specified channel. The socket specified in 'sender' will not get the message
+    def send_to_channel(self, message, channel, sender = None):
+        sockets = map(lambda client: client.socket, channel.clients)
+        if sender in sockets: sockets.remove(sender)
+        message = style.CYAN + style.BOLD + '[' + channel.name + '] ' + style.END + message + '\n'
+        self.send(message, sockets)
 
-    def send_error(self, message, socket):
-        message = styles.RED + styles.BOLD + '[FAIL] ' + style.END + message.strip()
-        send(message, [socket])
+    def send_server(self, message, sockets):
+        message = style.GREEN + style.BOLD + '[SERVER] ' + style.END + message.strip() + '\n'
+        self.send(message, sockets)
+
+    def send_error(self, message, sockets):
+        message = style.RED + style.BOLD + '[FAIL] ' + style.END + message.strip() + '\n'
+        self.send(message, sockets)
 
     # Function for handling commands given to the server via stdin
     def handle_server_command(self, command):

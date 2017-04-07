@@ -26,7 +26,7 @@ def ala_client():
     PORT = 6667
     NICK = sys.argv[2]
     PASSWORD = "lolmatron"
-    CHANNEL = sys.argv[3] if len(sys.argv) > 4 else 'default'
+    CHANNEL = sys.argv[3] if len(sys.argv) > 3 else 'default'
     text = ""
 
     # HELPER FUNCTION
@@ -72,6 +72,7 @@ def ala_client():
     print 'Connecting to ' + remote_ip + ' on port ' + str(PORT) + ' with username ' + NICK
     # Connect to remote server
     try:
+        print CLEAR
         s.connect((remote_ip , PORT))
         s.send("NICK %s\r\n" % NICK)
         s.send("JOIN %s\r\n" % CHANNEL)
@@ -80,7 +81,6 @@ def ala_client():
         # s.send("USER %s %s bla :%s\r\n" % (NICK, HOST, NICK))
         # s.send("PRIVMSG nickserv :identify %s %s\r\n" % (NICK, PASSWORD))
 
-        print CLEAR
         print 'Connected to ' + remote_ip + ' on port ' + str(PORT) + ' with username ' + NICK
     except:
         print 'Failed to connect'
