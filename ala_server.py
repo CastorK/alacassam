@@ -137,7 +137,7 @@ class Chat_server:
                 if client.socket == sender:
                     username = client.username
             self.handle_server_command(message + '\r\n')
-            
+
 
         elif message.find('NICK ') == 0:
             for client in self.connected_clients:
