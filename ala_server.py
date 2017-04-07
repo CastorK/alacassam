@@ -67,8 +67,8 @@ class Chat_server:
                             if received:
                                 # TODO: Add sender name to message
                                 for message in received.split('\r\n'):
-                                    if not self.handle_message(message.strip(), current_socket):
-                                        self.broadcast(message.strip(), current_socket)
+                                    if len(message.strip()) > 0:
+                                        self.handle_message(message.strip(), current_socket)
 
                             # Probably a broken socket
                             else:
@@ -117,6 +117,9 @@ class Chat_server:
                 if socket in self.connections:
                     self.connections.remove(socket)
 
+    def send_private(self, message, sender_name, receiver):
+        receiver.send('%s%s[PRIVATE]%s[%s] %s\r\n' % (style.BOLD, style.YELLOW, style.END, sender_name, message))
+
     def ping(self, client):
         if client in self.pendingConnections:
             try:
@@ -129,25 +132,45 @@ class Chat_server:
         if message.find('PONG') == 0 and sender in self.pendingConnections:
             self.pendingConnections.remove(sender)  # Remove socket from unauthorized connections
             self.connections.append(sender)         # Add it to authorized connections
-            message = 'Client IP: %s, PORT: %s joined' % (sender.getsockname()[0], sender.getsockname()[1])
+            username = "%s %s" % (sender.getpeername()[0], sender.getpeername()[1])
+            for client in self.connected_clients:
+                if client.socket == sender:
+                    username = client.username
+            message = 'broadcast:%s joined the channel!' % username
+            self.handle_server_command(message + '\r\n')
             print message
-            return True
+
         elif message.find('NICK ') == 0:
             for client in self.connected_clients:
                 if sender is client.socket:
                     client.username = message.split()[1]
-                    print 'Client IP: %s, PORT: %s is now called %s' % (sender.getsockname()[0], sender.getsockname()[1], client.username)
-            return True
+                    print 'Client IP: %s, PORT: %s is now called %s' % (sender.getpeername()[0], sender.getpeername()[1], client.username)
+
         elif message.find('JOIN ') == 0:
             for client in self.connected_clients:
                 if sender is client.socket:
                     if self.change_channel(client, '#' + message.split()[1]):
                         map(lambda client: client.socket, client.channel.clients)
-                        print 'Client IP: %s, PORT: %s joined %s' % (sender.getsockname()[0], sender.getsockname()[1], client.channel.name)
+                        print 'Client IP: %s, PORT: %s joined %s' % (sender.getpeername()[0], sender.getpeername()[1], client.channel.name)
 
-            return True
+        elif message.find('PRIVMSG ') == 0:
+            name = ''
+            for client in self.connected_clients:
+                if sender is client.socket:
+                    name = client.username
+            for client in self.connected_clients:
+                if message.split()[1].rstrip(':') == client.username:
+                    try:
+                        self.send_private(message.split()[2], name, client.socket)
+                    except:
+                        print 'Message failed to %s' % message.split()[1].rstrip(':')
+
         else:
-            return False
+            name = ''
+            for client in self.connected_clients:
+                if sender is client.socket:
+                    name = client.username
+            self.broadcast('[%s%s%s] %s\r\n' % (style.BOLD, name, style.END, message.strip()), sender)
 
     def change_channel(self, client, channel_name):
         for channel in self.channels:
@@ -179,7 +202,7 @@ class Chat_server:
             self.quit()
         elif key == 'broadcast':
             if argument:
-                self.broadcast(style.RED + style.BOLD + 'SERVER: ' + style.END + argument, self.server)
+                self.broadcast(style.GREEN + style.BOLD + 'SERVER: ' + style.END + argument, self.server)
         elif key == 'welcome':
             message = ('       WELCOME TO\n' +
                       '╔═╗╦  ╔═╗╔═╗╔═╗╔═╗╔═╗╔═╗╔╦╗\n'+

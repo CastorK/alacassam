@@ -1,7 +1,7 @@
 import sys, socket, select, string
 
 class color:
-    PURPLE = '\033[95m'
+    PURPLE = '\033[35m'
     CYAN = '\033[96m'
     DARKCYAN = '\033[36m'
     BLUE = '\033[94m'
@@ -17,6 +17,10 @@ def ala_client():
     if(len(sys.argv) < 3) :
         print('Usage : python ala_client.py hostname username channel(optional)')
         sys.exit()
+
+    # Some ANSI/VT100 Terminal Control Escape Sequences
+    CSI = '\x1b['
+    CLEAR = CSI + '2J'
 
     HOST = sys.argv[1]
     PORT = 6667
@@ -37,8 +41,8 @@ def ala_client():
             sys.stdout.write(helpmsg)
             sys.stdout.flush()
             return True
-        elif data.find("/msg") == 0:
-            msg = "PRIVMSG %s: %s" % (data.split()[1], data.split()[2])
+        elif data.find("/msg") == 0 and len(data.split()) > 2:
+            msg = "PRIVMSG %s: %s" % (data.split()[1], " ".join(data.split()[2:]))
             s.send(msg)
             return True
         elif data.find("/me") == 0:
@@ -75,7 +79,9 @@ def ala_client():
         # These 2 needed for actual IRC
         # s.send("USER %s %s bla :%s\r\n" % (NICK, HOST, NICK))
         # s.send("PRIVMSG nickserv :identify %s %s\r\n" % (NICK, PASSWORD))
-        print 'Connected'
+
+        print CLEAR
+        print 'Connected to ' + remote_ip + ' on port ' + str(PORT) + ' with username ' + NICK
     except:
         print 'Failed to connect'
         sys.exit()
