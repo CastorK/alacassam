@@ -14,8 +14,8 @@ class color:
 
 def ala_client():
 
-    if(len(sys.argv) < 4) :
-        print('Usage : python ala_client.py hostname port channel username')
+    if(len(sys.argv) < 3) :
+        print('Usage : python ala_client.py hostname username channel(optional)')
         sys.exit()
 
     # Some ANSI/VT100 Terminal Control Escape Sequences
@@ -23,10 +23,10 @@ def ala_client():
     CLEAR = CSI + '2J'
 
     HOST = sys.argv[1]
-    PORT = int(sys.argv[2])
-    NICK = sys.argv[3]
+    PORT = 6667
+    NICK = sys.argv[2]
     PASSWORD = "lolmatron"
-    CHANNEL = "channel"
+    CHANNEL = sys.argv[3] if len(sys.argv) > 3 else 'default'
     text = ""
 
     # HELPER FUNCTION
@@ -49,27 +49,34 @@ def ala_client():
             msg = color.PURPLE + color.BOLD + NICK + " " + " ".join(data.split()[1:]) + color.END
             s.send(msg)
             return True
-
+        elif data.find("/join") == 0 and len(data.split()) > 1:
+            msg = "JOIN %s\r\n" % data.split()[1].strip()
+            s.send(msg)
+            return True
         else:
             return False
 
     # Create socket
     try:
-        sockaddrs = socket.getaddrinfo(HOST, PORT)
-        for family, socktype, proto, canonname, sockaddr in sockaddrs:
-            try:
-                s = socket.socket(family, socktype)
-                s.settimeout(2)
-                s.connect(sockaddr)
-                break
-            except:
-                pass
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(2)
     except socket.error, msg:
-        print 'Error code: ' + str(msg[0]) + ' , Error message : ' + msg[1]
+        print 'Failed to create socket. Error code: ' + str(msg[0]) + ' , Error message : ' + msg[1]
         sys.exit();
 
+    # Find ip of host
+    try:
+        remote_ip = socket.gethostbyname(HOST)
+    except socket.gaierror:
+        # Could not resolve
+        print 'Hostname could not be resolved. Exiting'
+        sys.exit()
+
+    print 'Connecting to ' + remote_ip + ' on port ' + str(PORT) + ' with username ' + NICK
     # Connect to remote server
     try:
+        print CLEAR
+        s.connect((remote_ip , PORT))
         s.send("NICK %s\r\n" % NICK)
         s.send("JOIN %s\r\n" % CHANNEL)
 
@@ -77,10 +84,9 @@ def ala_client():
         # s.send("USER %s %s bla :%s\r\n" % (NICK, HOST, NICK))
         # s.send("PRIVMSG nickserv :identify %s %s\r\n" % (NICK, PASSWORD))
 
-        print CLEAR
+        print 'Connected to ' + remote_ip + ' on port ' + str(PORT) + ' with username ' + NICK
     except:
         print 'Failed to connect'
-        s.close()
         sys.exit()
 
     print("type /help for instructions")
@@ -103,9 +109,7 @@ def ala_client():
                         s.send("PONG " + text.split()[1] + '\r\n')
                     else:
                         # Print out what we received
-                        print
-                        msg = text.strip()
-                        print msg
+                        print '\n' + text.strip()
             else:
                 # It was from us the message came
                 data = sys.stdin.readline()

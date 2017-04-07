@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import socket, select, string
 import sys # for exit
 
@@ -20,6 +21,7 @@ class Chat_server:
         self.connections = []
         self.connected_clients = []
         self.pendingConnections = []
+        self.channels = [Channel('#default'), Channel('#default2')]
         try:
             # IPv4 TCP socket
             self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -28,8 +30,8 @@ class Chat_server:
             # Bind socket to port
             #server.bind((socket.gethostbyname(socket.gethostname()), port))
             self.server.bind(('', port))
-            # Listen for connections, max 5 connections in queue
-            self.server.listen(5)
+            # Listen for connections, max 10 connections in queue
+            self.server.listen(10)
             # Add server to list of readable sockets
             self.connections.append(self.server)
             print 'Alacassam chat server started on port %s' % port
@@ -60,16 +62,13 @@ class Chat_server:
                             self.handle_server_command(received)
                         # Message from client
                         else:
-                            # TODO: Check if the whole message has been received
                             received = current_socket.recv(4096)
-
                             # Some data was received
                             if received:
                                 # TODO: Add sender name to message
                                 for message in received.split('\r\n'):
                                     if len(message.strip()) > 0:
                                         self.handle_message(message.strip(), current_socket)
-
 
                             # Probably a broken socket
                             else:
@@ -99,7 +98,19 @@ class Chat_server:
             try:
                 if socket != self.server and socket != sender_socket:
                     # TODO: Check that the whole message has been sent.
-                    socket.send(message)
+                    socket.sendall(message)
+            except :
+                # Socket is broken
+                socket.close()
+                if socket in self.connections:
+                    self.connections.remove(socket)
+
+    # Sends message to the sockets specified in 'sockets'
+    def send(self, message, sockets):
+        for socket in sockets:
+            try:
+                if socket != self.server:
+                    socket.sendall(message)
             except :
                 # Socket is broken
                 socket.close()
@@ -125,9 +136,8 @@ class Chat_server:
             for client in self.connected_clients:
                 if client.socket == sender:
                     username = client.username
-            message = 'broadcast:%s joined the channel!' % username
             self.handle_server_command(message + '\r\n')
-            print message
+
 
         elif message.find('NICK ') == 0:
             for client in self.connected_clients:
@@ -138,8 +148,14 @@ class Chat_server:
         elif message.find('JOIN ') == 0:
             for client in self.connected_clients:
                 if sender is client.socket:
-                    client.channel = '#' + message.split()[1]
-                    print 'Client IP: %s, PORT: %s joined %s' % (sender.getpeername()[0], sender.getpeername()[1], client.channel)
+                    if self.change_channel(client, '#' + message.split()[1]):
+                        sockets = map(lambda client: client.socket, client.channel.clients)
+                        message = client.username + ' has joined the channel!'
+                        self.send_to_channel(message, client.channel)
+                        print 'Client IP: %s, PORT: %s joined %s' % (sender.getpeername()[0], sender.getpeername()[1], client.channel.name)
+                    else:
+                        self.send_server('\nredirecting to default channel...', [client.socket])
+                        self.change_channel(client, '#default')
 
         elif message.find('PRIVMSG ') == 0:
             name = ''
@@ -152,12 +168,47 @@ class Chat_server:
                         self.send_private(message.split()[2], name, client.socket)
                     except:
                         print 'Message failed to %s' % message.split()[1].rstrip(':')
+
         else:
             name = ''
             for client in self.connected_clients:
                 if sender is client.socket:
                     name = client.username
             self.broadcast('[%s%s%s] %s\r\n' % (style.BOLD, name, style.END, message.strip()), sender)
+
+    def change_channel(self, client, channel_name):
+        for channel in self.channels:
+            if channel_name == channel.name:
+                if not client in channel.clients:
+                    client.channel = channel
+                    channel.clients.append(client)
+                    self.send_server('Joined channel ' + channel.name + '!', [client.socket])
+                return True
+        message = "Channel doesn't exist"
+        self.send_error(message, [client.socket])
+        return False
+
+    def create_channel(self, name):
+        if name not in map(lambda ch: ch.name, self.channels):
+            self.channels.append(Channel('#' + name))
+            print 'Channel %s created!' % name
+        else:
+            print 'Channel %s already exists!' % name
+
+    # Sends to message to the specified channel. The socket specified in 'sender' will not get the message
+    def send_to_channel(self, message, channel, sender = None):
+        sockets = map(lambda client: client.socket, channel.clients)
+        if sender in sockets: sockets.remove(sender)
+        message = style.CYAN + style.BOLD + '[' + channel.name + '] ' + style.END + message + '\n'
+        self.send(message, sockets)
+
+    def send_server(self, message, sockets):
+        message = style.GREEN + style.BOLD + '[SERVER] ' + style.END + message.strip() + '\n'
+        self.send(message, sockets)
+
+    def send_error(self, message, sockets):
+        message = style.RED + style.BOLD + '[FAIL] ' + style.END + message.strip() + '\n'
+        self.send(message, sockets)
 
     # Function for handling commands given to the server via stdin
     def handle_server_command(self, command):
@@ -169,7 +220,16 @@ class Chat_server:
             self.quit()
         elif key == 'broadcast':
             if argument:
-                self.broadcast(style.PURPLE + style.BOLD + '[SERVER] ' + style.END + argument, self.server)
+                self.broadcast(style.GREEN + style.BOLD + 'SERVER: ' + style.END + argument, self.server)
+        elif key == 'welcome':
+            message = ('       WELCOME TO\n' +
+                      '╔═╗╦  ╔═╗╔═╗╔═╗╔═╗╔═╗╔═╗╔╦╗\n'+
+                      '╠═╣║  ╠═╣║  ╠═╣╚═╗╚═╗╠═╣║║║\n'+
+                      '╩ ╩╩═╝╩ ╩╚═╝╩ ╩╚═╝╚═╝╩ ╩╩ ╩\n')
+            self.broadcast(message, self.server)
+        elif key == 'newchannel':
+            if argument:
+                self.create_channel(argument)
 
     def quit(self):
         for sock in self.connections:
