@@ -27,7 +27,8 @@ class Chat_server:
                 # 30 second timeout on blocking.
                 # We're only interested in reading incoming connections
                 # (eg. new connections or messages from a client)
-                read, write, error = select.select(self.connections + self.pendingConnections, [], [], 30)
+
+                read, write, error = select.select(self.connections + self.pendingConnections + [sys.stdin], [], [], 30)
 
                 for current_socket in read:
                     # A try-except here can catch errors caused by a broken client socket,
@@ -39,8 +40,15 @@ class Chat_server:
                             client, address = self.server.accept()
                             self.pendingConnections.append(client)
                             self.ping(client)
+
+                        elif current_socket == sys.stdin:
+                            print "WOO"
+                            received = sys.stdin.readline()
+                            #handle_server_command(received)
+                            self.broadcast('server:' + received, server, current_socket, connections)
                         # Message from client
                         else:
+                            print current_socket
                             # TODO: Check if the whole message has been received
                             received = current_socket.recv(4096)
 
@@ -48,7 +56,7 @@ class Chat_server:
                             if received:
                                 # TODO: Add sender name to message
                                 if not self.handle_message(received, current_socket):
-                                    self.send_to_all(received, current_socket)
+                                    self.broadcast(received, current_socket)
 
                             # Probably a broken socket
                             else:
@@ -56,12 +64,12 @@ class Chat_server:
                                     self.connections.remove(current_socket)
 
                                 message = 'Client IP: %s, PORT: %s has disconnected' % address
-                                self.send_to_all(message + '\r\n', current_socket)
+                                self.broadcast(message + '\r\n', current_socket)
                                 print message
 
                     except socket.error, msg:
                         message = 'Client IP: %s, PORT: %s has disconnected' % address
-                        self.send_to_all(message + '\r\n', current_socket)
+                        self.broadcast(message + '\r\n', current_socket)
                         print 'Error code: %s\nError message : %s' % (str(msg[0]), msg[1])
                         print message
                         continue
@@ -73,7 +81,7 @@ class Chat_server:
             sys.exit();
 
     # Send message to all connected clients, except for the one who sent the message
-    def send_to_all(self, message, sender_socket):
+    def broadcast(self, message, sender_socket):
         for socket in self.connections:
             try:
                 if socket != self.server and socket != sender_socket:
@@ -88,19 +96,19 @@ class Chat_server:
     def ping(self, client):
         if client in self.pendingConnections:
             try:
-                client.send("PING :" + self.pingmsg + '\r\n')
+                client.send('PING :' + self.pingmsg + '\r\n')
             except:
                 client.close()
                 self.pendingConnections.remove(client)
 
     def handle_message(self, message, sender):
-        if message.find("PONG") == 0 and sender in self.pendingConnections:
+        if message.find('PONG') == 0 and sender in self.pendingConnections:
             self.pendingConnections.remove(sender)  # Remove socket from unauthorized connections
             self.connections.append(sender)         # Add it to authorized connections
             client = Client(sender)
             self.clients.append(client)
             message = 'Client IP: %s, PORT: %s joined' % sender.getsockname()
-            self.send_to_all(message + '\r\n', sender)
+            self.broadcast(message + '\r\n', sender)
             print message
             return True
         elif message.find('NICK ') == 0:
@@ -119,7 +127,7 @@ class Chat_server:
 class Channel:
     def __init__(self, name):
         self.name = name
-        self.clients = set()
+        self.clients = []
 
 class Client:
     def __init__(self, socket, username='', channel=''):
