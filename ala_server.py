@@ -25,7 +25,7 @@ class Chat_server:
                 # 30 second timeout on blocking.
                 # We're only interested in reading incoming connections
                 # (eg. new connections or messages from a client)
-                read, write, error = select.select(connections, [], [], 30)
+                read, write, error = select.select(connections + [sys.stdin], [], [], 30)
 
                 for current_socket in read:
                     # A try-except here can catch errors caused by a broken client socket,
@@ -39,8 +39,15 @@ class Chat_server:
                             message = 'Client IP: %s, PORT: %s joined' % address
                             self.send_to_all(message + '\n', server, client, connections)
                             print (message)
+                        elif current_socket == sys.stdin:
+                            print "WOO"
+                            received = sys.stdin.readline()
+                            # Some data was received
+                            #handle_server_command(received)
+                            self.send_to_all('server:' + received, server, current_socket, connections)
                         # Message from client
                         else:
+                            print current_socket
                             # TODO: Check if the whole message has been received
                             received = current_socket.recv(4096)
 
