@@ -18,6 +18,7 @@ class Chat_server:
         port = 6667
         self.pingmsg = "alacazzzzzzammmm" # 6 Z & 4 M
         self.connections = []
+        self.connected_clients = []
         self.pendingConnections = []
         try:
             # IPv4 TCP socket
@@ -50,6 +51,8 @@ class Chat_server:
                             # Accept the new connection, save the client socket and address
                             client, address = self.server.accept()
                             self.pendingConnections.append(client)
+                            clientObject = Client(socket=client)
+                            self.connected_clients.append(clientObject)
                             self.ping(client)
 
                         elif current_socket == sys.stdin:
@@ -63,8 +66,10 @@ class Chat_server:
                             # Some data was received
                             if received:
                                 # TODO: Add sender name to message
-                                if not self.handle_message(received, current_socket):
-                                    self.broadcast(received, current_socket)
+                                for message in received.split('\r\n'):
+                                    if not self.handle_message(message.strip(), current_socket):
+                                        self.broadcast(message.strip(), current_socket)
+
 
                             # Probably a broken socket
                             else:
@@ -113,9 +118,21 @@ class Chat_server:
         if message.find('PONG') == 0 and sender in self.pendingConnections:
             self.pendingConnections.remove(sender)  # Remove socket from unauthorized connections
             self.connections.append(sender)         # Add it to authorized connections
-            message = 'Client IP: %s, PORT: %s joined' % sender.getsockname()
+            message = 'Client IP: %s, PORT: %s joined' % (sender.getsockname()[0], sender.getsockname()[1])
             self.broadcast(message + '\r\n', sender)
             print message
+            return True
+        elif message.find('NICK ') == 0:
+            for client in self.connected_clients:
+                if sender is client.socket:
+                    client.username = message.split()[1]
+                    print 'Client IP: %s, PORT: %s is now called %s' % (sender.getsockname()[0], sender.getsockname()[1], client.username)
+            return True
+        elif message.find('JOIN ') == 0:
+            for client in self.connected_clients:
+                if sender is client.socket:
+                    client.channel = '#' + message.split()[1]
+                    print 'Client IP: %s, PORT: %s joined %s' % (sender.getsockname()[0], sender.getsockname()[1], client.channel)
             return True
         else:
             return False
@@ -141,6 +158,18 @@ class Channel:
     def __init__(self, name):
         self.name = name
         self.clients = []
+
+class Client:
+    def __init__(self, socket, username=None, channel=None):
+        self.socket = socket
+        if username is None:
+            self.username = ''
+        else:
+            self.username = username
+        if channel is None:
+            self.channel = ''
+        else:
+            self.channel = channel
 
 if __name__ == "__main__":
     try:
