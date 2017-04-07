@@ -39,8 +39,8 @@ class Chat_server:
                             # Accept the new connection, save the client socket and address
                             client, address = self.server.accept()
                             self.pendingConnections.append(client)
-                            client = Client(socket=client)
-                            self.connected_clients.append(client)
+                            clientObject = Client(socket=client)
+                            self.connected_clients.append(clientObject)
                             self.ping(client)
 
                         elif current_socket == sys.stdin:
@@ -54,8 +54,10 @@ class Chat_server:
                             # Some data was received
                             if received:
                                 # TODO: Add sender name to message
-                                if not self.handle_message(received, current_socket):
-                                    self.broadcast(received, current_socket)
+                                for message in received.split('\r\n'):
+                                    if not self.handle_message(message.strip(), current_socket):
+                                        self.broadcast(message.strip(), current_socket)
+
 
                             # Probably a broken socket
                             else:
@@ -112,6 +114,7 @@ class Chat_server:
             for client in self.connected_clients:
                 if sender is client.socket:
                     client.username = message.split()[1]
+                    print 'Client IP: %s, PORT: %s is now called %s' % (sender.getsockname()[0], sender.getsockname()[1], client.username)
             return True
         elif message.find('JOIN ') == 0:
             for client in self.connected_clients:

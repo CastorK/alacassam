@@ -70,7 +70,7 @@ def ala_client():
     try:
         s.connect((remote_ip , PORT))
         s.send("NICK %s\r\n" % NICK)
-        s.send("JOIN %s\n" % CHANNEL)
+        s.send("JOIN %s\r\n" % CHANNEL)
 
         # These 2 needed for actual IRC
         # s.send("USER %s %s bla :%s\r\n" % (NICK, HOST, NICK))
