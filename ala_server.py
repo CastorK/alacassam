@@ -67,8 +67,8 @@ class Chat_server:
                             if received:
                                 # TODO: Add sender name to message
                                 for message in received.split('\r\n'):
-                                    if not self.handle_message(message.strip(), current_socket):
-                                        self.broadcast(message.strip(), current_socket)
+                                    if len(message.strip()) > 0:
+                                        self.handle_message(message.strip(), current_socket)
 
 
                             # Probably a broken socket
@@ -118,24 +118,28 @@ class Chat_server:
         if message.find('PONG') == 0 and sender in self.pendingConnections:
             self.pendingConnections.remove(sender)  # Remove socket from unauthorized connections
             self.connections.append(sender)         # Add it to authorized connections
-            message = 'Client IP: %s, PORT: %s joined' % (sender.getsockname()[0], sender.getsockname()[1])
+            message = 'Client IP: %s, PORT: %s joined' % (sender.getpeername()[0], sender.getpeername()[1])
             self.broadcast(message + '\r\n', sender)
             print message
-            return True
+
         elif message.find('NICK ') == 0:
             for client in self.connected_clients:
                 if sender is client.socket:
                     client.username = message.split()[1]
-                    print 'Client IP: %s, PORT: %s is now called %s' % (sender.getsockname()[0], sender.getsockname()[1], client.username)
-            return True
+                    print 'Client IP: %s, PORT: %s is now called %s' % (sender.getpeername()[0], sender.getpeername()[1], client.username)
+
         elif message.find('JOIN ') == 0:
             for client in self.connected_clients:
                 if sender is client.socket:
                     client.channel = '#' + message.split()[1]
-                    print 'Client IP: %s, PORT: %s joined %s' % (sender.getsockname()[0], sender.getsockname()[1], client.channel)
-            return True
+                    print 'Client IP: %s, PORT: %s joined %s' % (sender.getpeername()[0], sender.getpeername()[1], client.channel)
+
         else:
-            return False
+            name = ''
+            for client in self.connected_clients:
+                if sender is client.socket:
+                    name = client.username
+            self.broadcast('[%s%s%s] %s\r\n' % (style.BOLD, name, style.END, message.strip()), sender)
 
     # Function for handling commands given to the server via stdin
     def handle_server_command(self, command):
