@@ -11,7 +11,6 @@ class Chat_server:
             # Socket can reuse address, this is to prevent the "Address already in use" error message
             server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             # Bind socket to port
-            print(socket.gethostbyname(socket.gethostname()))
             #server.bind((socket.gethostbyname(socket.gethostname()), port))
             server.bind(('', port))
             # Listen for connections, max 5 connections in queue
