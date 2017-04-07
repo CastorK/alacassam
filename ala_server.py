@@ -1,6 +1,18 @@
 import socket, select, string
 import sys # for exit
 
+class style:
+    PURPLE = '\033[95m'
+    CYAN = '\033[96m'
+    DARKCYAN = '\033[36m'
+    BLUE = '\033[94m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    END = '\033[0m'
+
 class Chat_server:
     def __init__(self):
         port = 6667
@@ -118,8 +130,7 @@ class Chat_server:
             self.quit()
         elif key == 'broadcast':
             if argument:
-                self.broadcast('server: ' + argument, self.server)
-
+                self.broadcast(style.PURPLE + style.BOLD + 'server:' + style.END + argument, self.server)
 
     def quit(self):
         for sock in self.connections:
