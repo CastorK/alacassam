@@ -85,7 +85,7 @@ class Chat_server:
                         self.broadcast(message + '\r\n', current_socket)
                         print 'Error code: %s\nError message : %s' % (str(msg[0]), msg[1])
                         print message
-                        continue
+                        break
 
             server.close()
 

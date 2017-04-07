@@ -55,24 +55,21 @@ def ala_client():
 
     # Create socket
     try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(2)
+        sockaddrs = socket.getaddrinfo(HOST, PORT)
+        for family, socktype, proto, canonname, sockaddr in sockaddrs:
+            try:
+                s = socket.socket(family, socktype)
+                s.settimeout(2)
+                s.connect(sockaddr)
+                break
+            except:
+                pass
     except socket.error, msg:
-        print 'Failed to create socket. Error code: ' + str(msg[0]) + ' , Error message : ' + msg[1]
+        print 'Error code: ' + str(msg[0]) + ' , Error message : ' + msg[1]
         sys.exit();
 
-    # Find ip of host
-    try:
-        remote_ip = socket.gethostbyname(HOST)
-    except socket.gaierror:
-        # Could not resolve
-        print 'Hostname could not be resolved. Exiting'
-        sys.exit()
-
-    print 'Connecting to ' + remote_ip + ' on port ' + str(PORT) + ' with username ' + NICK
     # Connect to remote server
     try:
-        s.connect((remote_ip , PORT))
         s.send("NICK %s\r\n" % NICK)
         s.send("JOIN %s\r\n" % CHANNEL)
 
@@ -81,7 +78,6 @@ def ala_client():
         # s.send("PRIVMSG nickserv :identify %s %s\r\n" % (NICK, PASSWORD))
 
         print CLEAR
-        print 'Connected to ' + remote_ip + ' on port ' + str(PORT) + ' with username ' + NICK
     except:
         print 'Failed to connect'
         sys.exit()
