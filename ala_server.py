@@ -99,7 +99,7 @@ class Chat_server:
 class Channel:
     def __init__(self, name):
         self.name = name
-        self.clients = set()
+        self.clients = []
 
 if __name__ == "__main__":
     try:
