@@ -103,7 +103,8 @@ def ala_client():
                         s.send("PONG " + text.split()[1] + '\r\n')
                     else:
                         # Print out what we received
-                        msg = '\r' + text.strip()
+                        print
+                        msg = text.strip()
                         print msg
             else:
                 # It was from us the message came
