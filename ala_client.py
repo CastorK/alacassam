@@ -80,6 +80,7 @@ def ala_client():
         print CLEAR
     except:
         print 'Failed to connect'
+        s.close()
         sys.exit()
 
     print("type /help for instructions")
@@ -102,7 +103,8 @@ def ala_client():
                         s.send("PONG " + text.split()[1] + '\r\n')
                     else:
                         # Print out what we received
-                        print(text.strip())
+                        msg = '\r' + text.strip()
+                        print msg
             else:
                 # It was from us the message came
                 data = sys.stdin.readline()
