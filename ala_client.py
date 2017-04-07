@@ -18,6 +18,10 @@ def ala_client():
         print('Usage : python ala_client.py hostname port channel username')
         sys.exit()
 
+    # Some ANSI/VT100 Terminal Control Escape Sequences
+    CSI = '\x1b['
+    CLEAR = CSI + '2J'
+
     HOST = sys.argv[1]
     PORT = int(sys.argv[2])
     NICK = sys.argv[3]
@@ -75,7 +79,9 @@ def ala_client():
         # These 2 needed for actual IRC
         # s.send("USER %s %s bla :%s\r\n" % (NICK, HOST, NICK))
         # s.send("PRIVMSG nickserv :identify %s %s\r\n" % (NICK, PASSWORD))
-        print 'Connected'
+
+        print CLEAR
+        print 'Connected to ' + remote_ip + ' on port ' + str(PORT) + ' with username ' + NICK
     except:
         print 'Failed to connect'
         sys.exit()

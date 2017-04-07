@@ -106,6 +106,9 @@ class Chat_server:
                 if socket in self.connections:
                     self.connections.remove(socket)
 
+    def send_private(self, message, sender_name, receiver):
+        receiver.send('%s%s[PRIVATE]%s[%s] %s\r\n' % (style.BOLD, style.YELLOW, style.END, sender_name, message))
+
     def ping(self, client):
         if client in self.pendingConnections:
             try:
@@ -118,8 +121,12 @@ class Chat_server:
         if message.find('PONG') == 0 and sender in self.pendingConnections:
             self.pendingConnections.remove(sender)  # Remove socket from unauthorized connections
             self.connections.append(sender)         # Add it to authorized connections
-            message = 'Client IP: %s, PORT: %s joined' % (sender.getpeername()[0], sender.getpeername()[1])
-            self.broadcast(message + '\r\n', sender)
+            username = "%s %s" % (sender.getpeername()[0], sender.getpeername()[1])
+            for client in self.connected_clients:
+                if client.socket == sender:
+                    username = client.username
+            message = 'broadcast:%s joined the channel!' % username
+            self.handle_server_command(message + '\r\n')
             print message
 
         elif message.find('NICK ') == 0:
@@ -142,7 +149,7 @@ class Chat_server:
             for client in self.connected_clients:
                 if message.split()[1].rstrip(':') == client.username:
                     try:
-                        client.socket.send('%s%s[PRIVATE]%s[%s] %s\r\n' % (style.BOLD, style.YELLOW, name, style.END, message.split()[2]))
+                        self.send_private(message.split()[2], name, client.socket)
                     except:
                         print 'Message failed to %s' % message.split()[1].rstrip(':')
         else:
@@ -162,7 +169,7 @@ class Chat_server:
             self.quit()
         elif key == 'broadcast':
             if argument:
-                self.broadcast(style.PURPLE + style.BOLD + 'server:' + style.END + argument, self.server)
+                self.broadcast(style.PURPLE + style.BOLD + '[SERVER] ' + style.END + argument, self.server)
 
     def quit(self):
         for sock in self.connections:
