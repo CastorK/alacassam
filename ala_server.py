@@ -112,10 +112,13 @@ class Chat_server:
             for client in self.connected_clients:
                 if sender is client.socket:
                     client.username = message.split()[1]
+            return True
         elif message.find('JOIN ') == 0:
             for client in self.connected_clients:
                 if sender is client.socket:
                     client.channel = '#' + message.split()[1]
+                    print 'Client IP: %s, PORT: %s joined %s' % (sender.getsockname()[0], sender.getsockname()[1], client.channel)
+            return True
         else:
             return False
 
