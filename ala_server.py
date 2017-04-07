@@ -6,7 +6,7 @@ class Chat_server:
         port = 6667
         self.pingmsg = "alacazzzzzzammmm" # 6 Z & 4 M
         self.connections = []
-        self.clients = []
+        self.connected_clients = []
         self.pendingConnections = []
         try:
             # IPv4 TCP socket
@@ -39,6 +39,8 @@ class Chat_server:
                             # Accept the new connection, save the client socket and address
                             client, address = self.server.accept()
                             self.pendingConnections.append(client)
+                            client = Client(socket=client)
+                            self.connected_clients.append(client)
                             self.ping(client)
 
                         elif current_socket == sys.stdin:
@@ -102,19 +104,18 @@ class Chat_server:
         if message.find('PONG') == 0 and sender in self.pendingConnections:
             self.pendingConnections.remove(sender)  # Remove socket from unauthorized connections
             self.connections.append(sender)         # Add it to authorized connections
-            client = Client(socket=sender)
-            self.clients.append(client)
             message = 'Client IP: %s, PORT: %s joined' % (sender.getsockname()[0], sender.getsockname()[1])
             self.broadcast(message + '\r\n', sender)
             print message
             return True
         elif message.find('NICK ') == 0:
-            print "# DEBUG # NICK command received"
-            for client in self.clients:
-                print '# DEBUG # USERNAME: ' + client.username
+            for client in self.connected_clients:
                 if sender is client.socket:
                     client.username = message.split()[1]
-                    print('He is called ' + client.username)
+        elif message.find('JOIN ') == 0:
+            for client in self.connected_clients:
+                if sender is client.socket:
+                    client.channel = '#' + message.split()[1]
         else:
             return False
 
@@ -135,10 +136,16 @@ class Channel:
         self.clients = []
 
 class Client:
-    def __init__(self, socket, username='', channel=''):
-        self.username = username
+    def __init__(self, socket, username=None, channel=None):
         self.socket = socket
-        self.channel = channel
+        if username is None:
+            self.username = ''
+        else:
+            self.username = username
+        if channel is None:
+            self.channel = ''
+        else:
+            self.channel = channel
 
 if __name__ == "__main__":
     try:

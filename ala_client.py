@@ -22,7 +22,7 @@ def ala_client():
     PORT = int(sys.argv[2])
     NICK = sys.argv[3]
     PASSWORD = "lolmatron"
-    CHANNEL = "#channel"
+    CHANNEL = "channel"
     text = ""
 
     # HELPER FUNCTION
