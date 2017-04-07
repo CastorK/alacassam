@@ -134,6 +134,17 @@ class Chat_server:
                     client.channel = '#' + message.split()[1]
                     print 'Client IP: %s, PORT: %s joined %s' % (sender.getpeername()[0], sender.getpeername()[1], client.channel)
 
+        elif message.find('PRIVMSG ') == 0:
+            name = ''
+            for client in self.connected_clients:
+                if sender is client.socket:
+                    name = client.username
+            for client in self.connected_clients:
+                if message.split()[1].rstrip(':') == client.username:
+                    try:
+                        client.socket.send('%s%s[PRIVATE]%s[%s] %s\r\n' % (style.BOLD, style.YELLOW, name, style.END, message.split()[2]))
+                    except:
+                        print 'Message failed to %s' % message.split()[1].rstrip(':')
         else:
             name = ''
             for client in self.connected_clients:

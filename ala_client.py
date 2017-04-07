@@ -37,8 +37,8 @@ def ala_client():
             sys.stdout.write(helpmsg)
             sys.stdout.flush()
             return True
-        elif data.find("/msg") == 0:
-            msg = "PRIVMSG %s: %s" % (data.split()[1], data.split()[2])
+        elif data.find("/msg") == 0 and len(data.split()) > 2:
+            msg = "PRIVMSG %s: %s" % (data.split()[1], " ".join(data.split()[2:]))
             s.send(msg)
             return True
         elif data.find("/me") == 0:
