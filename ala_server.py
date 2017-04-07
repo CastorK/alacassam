@@ -119,10 +119,17 @@ class Chat_server:
         else:
             return False
 
+    # Function for handling commands given to the server via stdin
     def handle_server_command(self, command):
-        command = command.strip()
-        if command == 'quit':
+        command = command.strip().split(':')
+        key = command[0]
+        argument = command[1].strip() if len(command) > 1 else None
+
+        if key == 'quit':
             self.quit()
+        elif key == 'broadcast':
+            if argument:
+                self.broadcast('server: ' + argument, self.server)
 
 
     def quit(self):
