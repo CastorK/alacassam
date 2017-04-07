@@ -14,15 +14,15 @@ class color:
 
 def ala_client():
 
-    if(len(sys.argv) < 4) :
-        print('Usage : python ala_client.py hostname port channel username')
+    if(len(sys.argv) < 3) :
+        print('Usage : python ala_client.py hostname username channel(optional)')
         sys.exit()
 
     HOST = sys.argv[1]
-    PORT = int(sys.argv[2])
-    NICK = sys.argv[3]
+    PORT = 6667
+    NICK = sys.argv[2]
     PASSWORD = "lolmatron"
-    CHANNEL = "channel"
+    CHANNEL = sys.argv[3] if len(sys.argv) > 4 else 'default'
     text = ""
 
     # HELPER FUNCTION
@@ -100,7 +100,7 @@ def ala_client():
                         s.send("PONG " + text.split()[1] + '\r\n')
                     else:
                         # Print out what we received
-                        print(text.strip())
+                        print text.strip()
             else:
                 # It was from us the message came
                 data = sys.stdin.readline()
