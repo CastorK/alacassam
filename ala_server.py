@@ -6,6 +6,7 @@ class Chat_server:
         port = 6667
         self.pingmsg = "alacazzzzzzammmm" # 6 Z & 4 M
         self.connections = []
+        self.clients = []
         self.pendingConnections = []
         try:
             # IPv4 TCP socket
@@ -96,10 +97,17 @@ class Chat_server:
         if message.find("PONG") == 0 and sender in self.pendingConnections:
             self.pendingConnections.remove(sender)  # Remove socket from unauthorized connections
             self.connections.append(sender)         # Add it to authorized connections
+            client = Client(sender)
+            self.clients.append(client)
             message = 'Client IP: %s, PORT: %s joined' % sender.getsockname()
             self.send_to_all(message + '\r\n', sender)
             print message
             return True
+        elif message.find('NICK ') == 0:
+            for client in self.clients:
+                if sender == client.socket:
+                    client.username = message.split()[1]
+                    print('He is called ' + client.username)
         else:
             return False
 
@@ -112,6 +120,12 @@ class Channel:
     def __init__(self, name):
         self.name = name
         self.clients = set()
+
+class Client:
+    def __init__(self, socket, username='', channel=''):
+        self.username = username
+        self.socket = socket
+        self.channel = channel
 
 if __name__ == "__main__":
     try:
