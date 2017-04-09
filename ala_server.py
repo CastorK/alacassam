@@ -172,7 +172,7 @@ class Chat_server:
             for client in self.connected_clients:
                 if message.split()[1].rstrip(':') == client.username:
                     try:
-                        self.send_private(message.split()[2], name, client.socket)
+                        self.send_private(message.split()[2:], name, client.socket)
                     except:
                         print 'Message failed to %s' % message.split()[1].rstrip(':')
 
