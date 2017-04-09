@@ -109,7 +109,7 @@ def ala_client():
                         s.sendall("PONG " + text.split()[1] + '\r\n')
                     else:
                         # Print out what we received
-                        print text.strip()
+                        print '\n' + text.strip()
             else:
                 # It was from us the message came
                 data = sys.stdin.readline()
