@@ -181,12 +181,16 @@ class Chat_server:
             for client in self.connected_clients:
                 if sender is client.socket:
                     name = client.username
-            self.broadcast('[%s%s%s] %s\r\n' % (style.BOLD, name, style.END, message.strip()), sender)
+                    sockets = map(lambda client: client.socket, client.channel.clients)
+                    if sender in sockets: sockets.remove(sender)
+                    self.send('[%s%s%s] %s\r\n' % (style.BOLD, name, style.END, message.strip()), sockets)
 
     def change_channel(self, client, channel_name):
         for channel in self.channels:
             if channel_name == channel.name:
                 if not client in channel.clients:
+                    if client.channel:
+                        client.channel.clients.remove(client)
                     client.channel = channel
                     channel.clients.append(client)
                     self.send_server('Joined channel ' + channel.name + '!', [client.socket])
@@ -250,7 +254,7 @@ class Client:
         else:
             self.username = username
         if channel is None:
-            self.channel = ''
+            self.channel = None
         else:
             self.channel = channel
 

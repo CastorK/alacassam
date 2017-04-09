@@ -37,7 +37,10 @@ def ala_client():
             sys.exit()
             return True
         elif data == '/help':
-            helpmsg = 'Type "/quit" to exit the program\n'
+            helpmsg = ('Type "/quit" to exit the program\n' +
+                        'Type "/me ACTION" to send an action\n' +
+                        'Type "/join CHANNEL" to join a channel\n' +
+                        'Type "/msg USER MESSAGE" to send a private message to the specified user\n')
             sys.stdout.write(helpmsg)
             sys.stdout.flush()
             return True
