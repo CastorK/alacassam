@@ -21,7 +21,7 @@ class Chat_server:
         self.connections = []
         self.connected_clients = []
         self.pendingConnections = []
-        self.channels = [Channel('#default'), Channel('#default2')]
+        self.channels = [Channel('#default'), Channel('#random')]
         try:
             # IPv4 TCP socket
             self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -42,7 +42,7 @@ class Chat_server:
                 # We're only interested in reading incoming connections
                 # (eg. new connections or messages from a client)
 
-                read, write, error = select.select(self.connections + self.pendingConnections + [sys.stdin], [], [], 30)
+                read, write, error = select.select(self.connections + self.pendingConnections + [sys.stdin], [], [], 0)
 
                 for current_socket in read:
                     # A try-except here can catch errors caused by a broken client socket,
@@ -133,6 +133,13 @@ class Chat_server:
             self.pendingConnections.remove(sender)  # Remove socket from unauthorized connections
             self.connections.append(sender)         # Add it to authorized connections
             username = "%s %s" % (sender.getpeername()[0], sender.getpeername()[1])
+            greeting = ('---------------------------\n'+
+                        'WELCOME TO\n' +
+                        '╔═╗╦  ╔═╗╔═╗╔═╗╔═╗╔═╗╔═╗╔╦╗\n'+
+                        '╠═╣║  ╠═╣║  ╠═╣╚═╗╚═╗╠═╣║║║\n'+
+                        '╩ ╩╩═╝╩ ╩╚═╝╩ ╩╚═╝╚═╝╩ ╩╩ ╩\n'+
+                        '---------------------------\n')
+            self.send(greeting, [sender])
             for client in self.connected_clients:
                 if client.socket == sender:
                     username = client.username
@@ -220,13 +227,7 @@ class Chat_server:
             self.quit()
         elif key == 'broadcast':
             if argument:
-                self.broadcast(style.GREEN + style.BOLD + 'SERVER: ' + style.END + argument, self.server)
-        elif key == 'welcome':
-            message = ('       WELCOME TO\n' +
-                      '╔═╗╦  ╔═╗╔═╗╔═╗╔═╗╔═╗╔═╗╔╦╗\n'+
-                      '╠═╣║  ╠═╣║  ╠═╣╚═╗╚═╗╠═╣║║║\n'+
-                      '╩ ╩╩═╝╩ ╩╚═╝╩ ╩╚═╝╚═╝╩ ╩╩ ╩\n')
-            self.broadcast(message, self.server)
+                self.broadcast(style.GREEN + style.BOLD + '[SERVER] ' + style.END + argument, self.server)
         elif key == 'newchannel':
             if argument:
                 self.create_channel(argument)

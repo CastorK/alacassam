@@ -43,15 +43,15 @@ def ala_client():
             return True
         elif data.find("/msg") == 0 and len(data.split()) > 2:
             msg = "PRIVMSG %s: %s" % (data.split()[1], " ".join(data.split()[2:]))
-            s.send(msg)
+            s.sendall(msg)
             return True
         elif data.find("/me") == 0:
             msg = color.PURPLE + color.BOLD + NICK + " " + " ".join(data.split()[1:]) + color.END
-            s.send(msg)
+            s.sendall(msg)
             return True
         elif data.find("/join") == 0 and len(data.split()) > 1:
             msg = "JOIN %s\r\n" % data.split()[1].strip()
-            s.send(msg)
+            s.sendall(msg)
             return True
         else:
             return False
@@ -77,12 +77,12 @@ def ala_client():
     try:
         print CLEAR
         s.connect((remote_ip , PORT))
-        s.send("NICK %s\r\n" % NICK)
-        s.send("JOIN %s\r\n" % CHANNEL)
+        s.sendall("NICK %s\r\n" % NICK)
+        s.sendall("JOIN %s\r\n" % CHANNEL)
 
         # These 2 needed for actual IRC
-        # s.send("USER %s %s bla :%s\r\n" % (NICK, HOST, NICK))
-        # s.send("PRIVMSG nickserv :identify %s %s\r\n" % (NICK, PASSWORD))
+        # s.sendall("USER %s %s bla :%s\r\n" % (NICK, HOST, NICK))
+        # s.sendall("PRIVMSG nickserv :identify %s %s\r\n" % (NICK, PASSWORD))
 
         print 'Connected to ' + remote_ip + ' on port ' + str(PORT) + ' with username ' + NICK
     except:
@@ -106,7 +106,7 @@ def ala_client():
                     sys.exit()
                 else:
                     if text.find("PING") != -1 and len(text.split()) > 1:
-                        s.send("PONG " + text.split()[1] + '\r\n')
+                        s.sendall("PONG " + text.split()[1] + '\r\n')
                     else:
                         # Print out what we received
                         print text.strip()
@@ -114,7 +114,7 @@ def ala_client():
                 # It was from us the message came
                 data = sys.stdin.readline()
                 if not check_keywords(s, data.strip()):
-                    s.send(data)
+                    s.sendall(data)
                     sys.stdout.flush()
 
 if __name__ == "__main__":
